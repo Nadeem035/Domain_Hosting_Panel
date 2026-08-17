@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Users;
 
+use App\Livewire\Concerns\WithSorting;
 use App\Models\User;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -11,7 +12,9 @@ use Spatie\Permission\Models\Role;
 
 class UserIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, WithSorting;
+
+    public string $sortBy = 'name';
 
     #[Url(as: 'q', history: true)]
     public string $search = '';
@@ -77,7 +80,7 @@ class UserIndex extends Component
     #[Computed]
     public function users()
     {
-        return User::query()
+        $query = User::query()
             ->with('roles')
             ->withCount(['clients as clients_count'])
             ->when($this->search !== '', fn ($q) => $q
@@ -85,8 +88,9 @@ class UserIndex extends Component
                     ->where('name', 'like', "%{$this->search}%")
                     ->orWhere('email', 'like', "%{$this->search}%")
                     ->orWhere('company_name', 'like', "%{$this->search}%")))
-            ->when($this->roleFilter !== '', fn ($q) => $q->role($this->roleFilter))
-            ->orderBy('name')
+            ->when($this->roleFilter !== '', fn ($q) => $q->role($this->roleFilter));
+
+        return $this->applySorting($query, ['name', 'email', 'company_name', 'timezone', 'clients_count', 'created_at'])
             ->paginate(12);
     }
 

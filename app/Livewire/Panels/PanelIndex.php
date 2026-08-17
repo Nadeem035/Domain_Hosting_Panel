@@ -3,6 +3,7 @@
 namespace App\Livewire\Panels;
 
 use App\Enums\PanelType;
+use App\Livewire\Concerns\WithSorting;
 use App\Models\Panel;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -13,7 +14,9 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class PanelIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, WithSorting;
+
+    public string $sortBy = 'name';
 
     #[Url(as: 'q', history: true)]
     public string $search = '';
@@ -60,15 +63,16 @@ class PanelIndex extends Component
     #[Computed]
     public function panels()
     {
-        return Panel::query()
+        $query = Panel::query()
             ->withCount(['hostingPlans', 'services' => fn ($q) => $q->where('status', 'active')])
             ->when($this->search, fn ($q) => $q
                 ->where(fn ($inner) => $inner
                     ->where('name', 'like', "%{$this->search}%")
                     ->orWhere('host', 'like', "%{$this->search}%")
                     ->orWhere('ip_address', 'like', "%{$this->search}%")))
-            ->when($this->typeFilter, fn ($q) => $q->where('type', $this->typeFilter))
-            ->orderBy('name')
+            ->when($this->typeFilter, fn ($q) => $q->where('type', $this->typeFilter));
+
+        return $this->applySorting($query, ['name', 'type', 'host', 'ip_address', 'hosting_plans_count', 'services_count'])
             ->paginate(15);
     }
 

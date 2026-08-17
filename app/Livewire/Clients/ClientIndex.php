@@ -3,6 +3,7 @@
 namespace App\Livewire\Clients;
 
 use App\Enums\ClientStatus;
+use App\Livewire\Concerns\WithSorting;
 use App\Models\Client;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -13,7 +14,9 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class ClientIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, WithSorting;
+
+    public string $sortBy = 'name';
 
     #[Url(as: 'q', history: true)]
     public string $search = '';
@@ -56,7 +59,7 @@ class ClientIndex extends Component
     #[Computed]
     public function clients()
     {
-        return Client::query()
+        $query = Client::query()
             ->withSum(['services as active_revenue' => fn ($q) => $q->active()], 'client_price')
             ->withCount(['services as active_services_count' => fn ($q) => $q->active()])
             ->when($this->search !== '', fn ($q) => $q
@@ -65,9 +68,7 @@ class ClientIndex extends Component
                     ->orWhere('email', 'like', "%{$this->search}%")
                     ->orWhere('company', 'like', "%{$this->search}%")
                     ->orWhere('phone', 'like', "%{$this->search}%")))
-            ->when($this->statusFilter !== '', fn ($q) => $q->where('status', $this->statusFilter))
-            ->orderBy('name')
-            ->paginate(12);
+            ->when($this->statusFilter !== '', fn ($q) => $q->where('status', $this->statusFilter));
     }
 
     public function render()
