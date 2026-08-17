@@ -44,7 +44,7 @@ class ServiceFactory extends Factory
     public function hosting(): static
     {
         return $this->state(function () {
-            $panel = Panel::factory()->hosting()->create();
+            $panel = Panel::factory()->cpanel()->create();
 
             return [
                 'type' => ServiceType::Hosting,

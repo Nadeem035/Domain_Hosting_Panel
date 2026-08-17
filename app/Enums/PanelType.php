@@ -4,16 +4,20 @@ namespace App\Enums;
 
 enum PanelType: string
 {
-    case Hosting = 'hosting';
-    case Domain = 'domain';
-    case Both = 'both';
+    case Cpanel = 'cpanel';
+    case Whm = 'whm';
+    case Plesk = 'plesk';
+    case DirectAdmin = 'directadmin';
+    case Other = 'other';
 
     public function label(): string
     {
         return match ($this) {
-            self::Hosting => 'Hosting',
-            self::Domain => 'Domain',
-            self::Both => 'Hosting & Domain',
+            self::Cpanel => 'cPanel',
+            self::Whm => 'WHM',
+            self::Plesk => 'Plesk',
+            self::DirectAdmin => 'DirectAdmin',
+            self::Other => 'Other',
         };
     }
 }

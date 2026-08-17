@@ -20,7 +20,12 @@ class Panel extends Model
         'user_id',
         'name',
         'type',
+        'host',
+        'ip_address',
+        'client_limit',
+        'username',
         'login_url',
+        'is_active',
         'notes',
     ];
 
@@ -28,13 +33,14 @@ class Panel extends Model
     {
         return [
             'type' => PanelType::class,
+            'is_active' => 'boolean',
         ];
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'type', 'login_url', 'notes'])
+            ->logOnly(['name', 'type', 'host', 'ip_address', 'client_limit', 'username', 'login_url', 'is_active', 'notes'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('panel');

@@ -18,20 +18,30 @@ class PanelFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'name' => fake()->company().' '.fake()->randomElement(['cPanel', 'WHM', 'Registrar', 'Server']),
+            'name' => fake()->company().' '.fake()->randomElement(['cPanel', 'WHM', 'Plesk', 'Server']),
             'type' => fake()->randomElement(PanelType::cases()),
+            'host' => fake()->optional()->domainName(),
+            'ip_address' => fake()->optional()->ipv4(),
+            'client_limit' => fake()->randomElement([0, 10, 50, 100, 500]),
+            'username' => fake()->optional()->userName(),
             'login_url' => fake()->optional()->url(),
+            'is_active' => true,
             'notes' => fake()->optional()->sentence(),
         ];
     }
 
-    public function hosting(): static
+    public function cpanel(): static
     {
-        return $this->state(fn () => ['type' => PanelType::Hosting]);
+        return $this->state(fn () => ['type' => PanelType::Cpanel]);
     }
 
-    public function domain(): static
+    public function other(): static
     {
-        return $this->state(fn () => ['type' => PanelType::Domain]);
+        return $this->state(fn () => ['type' => PanelType::Other]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn () => ['is_active' => false]);
     }
 }

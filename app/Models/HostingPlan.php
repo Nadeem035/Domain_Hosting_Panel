@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BillingCycle;
 use App\Models\Traits\BelongsToTenant;
 use Database\Factories\HostingPlanFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,15 +21,30 @@ class HostingPlan extends Model
         'user_id',
         'panel_id',
         'name',
+        'billing_cycle',
+        'price',
         'disk_space',
         'bandwidth',
+        'features',
+        'description',
+        'is_active',
         'notes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'billing_cycle' => BillingCycle::class,
+            'price' => 'float',
+            'features' => 'array',
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['panel_id', 'name', 'disk_space', 'bandwidth', 'notes'])
+            ->logOnly(['panel_id', 'name', 'billing_cycle', 'price', 'disk_space', 'bandwidth', 'features', 'description', 'is_active', 'notes'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('hosting_plan');

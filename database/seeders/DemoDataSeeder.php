@@ -60,11 +60,11 @@ class DemoDataSeeder extends Seeder
 
         $hostingPanel = Panel::factory()->for($user)->create([
             'name' => 'Shared cPanel',
-            'type' => PanelType::Hosting,
+            'type' => PanelType::Cpanel,
         ]);
         $domainPanel = Panel::factory()->for($user)->create([
             'name' => 'Domain Registrar',
-            'type' => PanelType::Domain,
+            'type' => PanelType::Other,
         ]);
 
         $starter = HostingPlan::factory()->for($user)->for($hostingPanel)->create([

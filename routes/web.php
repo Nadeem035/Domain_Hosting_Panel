@@ -6,6 +6,8 @@ use App\Livewire\Clients\ClientIndex;
 use App\Livewire\Clients\ClientShow;
 use App\Livewire\Clients\ClientForm;
 use App\Livewire\Panels\PanelIndex;
+use App\Livewire\Panels\PanelForm;
+use App\Livewire\Panels\PanelShow;
 use App\Livewire\Services\ServiceIndex;
 use App\Livewire\Services\ServiceForm;
 use App\Livewire\Services\ServiceShow;
@@ -26,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('panels')->name('panels.')->group(function () {
         Route::get('/', PanelIndex::class)->name('index');
+        Route::get('/create', PanelForm::class)->name('create');
+        Route::get('/{panel}/edit', PanelForm::class)->name('edit');
+        Route::get('/{panel}', PanelShow::class)->name('show');
     });
 
     Route::prefix('services')->name('services.')->group(function () {
