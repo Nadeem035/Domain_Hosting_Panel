@@ -39,6 +39,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', ReportIndex::class)->name('index');
     });
 
+    Route::middleware('admin')->prefix('users')->name('users.')->group(function () {
+        Route::get('/', App\Livewire\Users\UserIndex::class)->name('index');
+        Route::get('/create', App\Livewire\Users\UserForm::class)->name('create');
+        Route::get('/{user}/edit', App\Livewire\Users\UserForm::class)->name('edit');
+    });
+
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', Settings::class)->name('index');
     });
