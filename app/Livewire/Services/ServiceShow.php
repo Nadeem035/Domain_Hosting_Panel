@@ -84,6 +84,10 @@ class ServiceShow extends Component
 
     public function render()
     {
-        return view('livewire.services.show');
+        return view('livewire.services.show', [
+            'renewals' => $this->renewals,
+            'tier' => $this->tier,
+            'daysLeft' => $this->daysLeft,
+        ]);
     }
 }

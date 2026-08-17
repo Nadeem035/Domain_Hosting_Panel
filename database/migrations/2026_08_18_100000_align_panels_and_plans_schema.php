@@ -24,7 +24,9 @@ return new class extends Migration
                 'type' => DB::raw("CASE type WHEN 'hosting' THEN 'cpanel' WHEN 'domain' THEN 'other' WHEN 'both' THEN 'other' ELSE type END"),
             ]);
 
-            DB::statement("ALTER TABLE panels MODIFY type ENUM('cpanel','whm','plesk','directadmin','other') NOT NULL DEFAULT 'cpanel'");
+            if (DB::connection()->getDriverName() === 'mysql') {
+                DB::statement("ALTER TABLE panels MODIFY type ENUM('cpanel','whm','plesk','directadmin','other') NOT NULL DEFAULT 'cpanel'");
+            }
         }
 
         if (Schema::hasTable('hosting_plans') && ! Schema::hasColumn('hosting_plans', 'billing_cycle')) {

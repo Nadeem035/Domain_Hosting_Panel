@@ -19,7 +19,7 @@ final class ServiceRenewalService
     {
         $months = $service->hostingPlan?->billing_cycle?->months() ?? 1;
         $previousExpiry = $service->expiry_date?->copy() ?? Carbon::today();
-        $newExpiry = $previousExpiry->copy()->addMonths($months);
+        $newExpiry = self::addMonthsClamped($previousExpiry->copy(), $months);
         $paymentReceived = (bool) ($data['payment_received'] ?? true);
 
         $renewal = ServiceRenewal::create([
@@ -44,5 +44,15 @@ final class ServiceRenewalService
         ]);
 
         return $renewal;
+    }
+
+    /**
+     * Add months to a date, clamping to the end of the month when the start
+     * day doesn't exist in the target month (so Aug 31 + 3 months → Nov 30,
+     * Nov 30 + 3 months → Feb 28/29, etc.).
+     */
+    private static function addMonthsClamped(Carbon $date, int $months): Carbon
+    {
+        return $date->copy()->addMonthsNoOverflow($months);
     }
 }

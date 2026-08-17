@@ -38,84 +38,95 @@
         </div>
 
         <div wire:loading.remove wire:target="search, roleFilter, sortBy, goToPage, previousPage, nextPage">
-            <x-data-table :columns="[
-                ['key' => 'name', 'label' => 'User', 'sortable' => true],
-                ['key' => 'company_name', 'label' => 'Company', 'sortable' => true],
-                ['key' => 'timezone', 'label' => 'Timezone', 'sortable' => true],
-                ['label' => 'Role'],
-                ['key' => 'clients_count', 'label' => 'Clients', 'sortable' => true, 'class' => 'text-right'],
-                ['key' => 'created_at', 'label' => 'Created', 'sortable' => true],
-                ['label' => '', 'class' => 'text-right'],
-            ]" :rows="$this->users" :sort-by="$this->sortBy" :sort-dir="$this->sortDir">
-                @forelse ($this->users as $user)
-                    <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
-                        <td class="px-5 py-4">
-                            <div class="flex min-w-0 items-center gap-3">
-                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">
-                                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                                </span>
-                                <span class="min-w-0">
-                                    <span class="block truncate font-semibold text-zinc-900 dark:text-zinc-100">
-                                        {{ $user->name }}
-                                        @if ($user->id === auth()->id())
-                                            <span class="text-xs font-normal text-zinc-400">(you)</span>
+            <div class="card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <x-data-table :columns="[
+                            ['key' => 'name', 'label' => 'User', 'sortable' => true],
+                            ['key' => 'company_name', 'label' => 'Company', 'sortable' => true],
+                            ['key' => 'timezone', 'label' => 'Timezone', 'sortable' => true],
+                            ['label' => 'Role'],
+                            ['key' => 'clients_count', 'label' => 'Clients', 'sortable' => true, 'class' => 'text-right'],
+                            ['key' => 'created_at', 'label' => 'Created', 'sortable' => true],
+                            ['label' => '', 'class' => 'text-right'],
+                        ]" :sort-by="$this->sortBy" :sort-dir="$this->sortDir" />
+                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @forelse ($this->users as $user)
+                                <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                                    <td class="px-5 py-4">
+                                        <div class="flex min-w-0 items-center gap-3">
+                                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">
+                                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                                            </span>
+                                            <span class="min-w-0">
+                                                <span class="block truncate font-semibold text-zinc-900 dark:text-zinc-100">
+                                                    {{ $user->name }}
+                                                    @if ($user->id === auth()->id())
+                                                        <span class="text-xs font-normal text-zinc-400">(you)</span>
+                                                    @endif
+                                                </span>
+                                                <span class="block truncate text-xs text-zinc-400 dark:text-zinc-500">{{ $user->email }}</span>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="max-w-[200px] px-5 py-4 text-zinc-600 dark:text-zinc-300">
+                                        <span class="block truncate">{{ $user->company_name ?? '—' }}</span>
+                                    </td>
+                                    <td class="px-5 py-4 text-zinc-600 dark:text-zinc-300">{{ $user->timezone }}</td>
+                                    <td class="px-5 py-4">
+                                        <div class="flex flex-wrap gap-1">
+                                            @forelse ($user->roles as $role)
+                                                <span class="badge {{ $role->name === 'admin' ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' }}">
+                                                    {{ ucfirst($role->name) }}
+                                                </span>
+                                            @empty
+                                                <span class="badge bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">None</span>
+                                            @endforelse
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-4 text-right text-zinc-600 dark:text-zinc-300">{{ $user->clients_count }}</td>
+                                    <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300">{{ $user->created_at?->format('M j, Y') }}</td>
+                                    <td class="whitespace-nowrap px-5 py-4 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            <a href="{{ route('users.edit', $user) }}" wire:navigate class="btn-ghost !p-2" title="Edit">
+                                                <x-icon name="pencil-square" class="h-4 w-4" />
+                                            </a>
+                                            @if ($user->id !== auth()->id())
+                                                <button wire:click="confirmDelete({{ $user->id }})" class="btn-ghost !p-2 text-rose-500 hover:!bg-rose-50 hover:!text-rose-600 dark:hover:!bg-rose-500/10" title="Delete">
+                                                    <x-icon name="trash" class="h-4 w-4" />
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7">
+                                        @if ($this->search !== '' || $this->roleFilter !== '')
+                                            <x-empty-state icon="search" title="No users match your filters">
+                                                <button wire:click="$set('search', ''); $set('roleFilter', '')" class="btn-ghost text-primary-600 dark:text-primary-400">
+                                                    Clear filters
+                                                </button>
+                                            </x-empty-state>
+                                        @else
+                                            <x-empty-state icon="users" title="No users yet" text="Create the first account to let someone log in.">
+                                                <a href="{{ route('users.create') }}" wire:navigate class="btn-primary">
+                                                    <x-icon name="plus" class="h-4 w-4" />
+                                                    Add your first user
+                                                </a>
+                                            </x-empty-state>
                                         @endif
-                                    </span>
-                                    <span class="block truncate text-xs text-zinc-400 dark:text-zinc-500">{{ $user->email }}</span>
-                                </span>
-                            </div>
-                        </td>
-                        <td class="max-w-[200px] px-5 py-4 text-zinc-600 dark:text-zinc-300">
-                            <span class="block truncate">{{ $user->company_name ?? '—' }}</span>
-                        </td>
-                        <td class="px-5 py-4 text-zinc-600 dark:text-zinc-300">{{ $user->timezone }}</td>
-                        <td class="px-5 py-4">
-                            <div class="flex flex-wrap gap-1">
-                                @forelse ($user->roles as $role)
-                                    <span class="badge {{ $role->name === 'admin' ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' }}">
-                                        {{ ucfirst($role->name) }}
-                                    </span>
-                                @empty
-                                    <span class="badge bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">None</span>
-                                @endforelse
-                            </div>
-                        </td>
-                        <td class="px-5 py-4 text-right text-zinc-600 dark:text-zinc-300">{{ $user->clients_count }}</td>
-                        <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300">{{ $user->created_at?->format('M j, Y') }}</td>
-                        <td class="whitespace-nowrap px-5 py-4 text-right">
-                            <div class="flex items-center justify-end gap-1">
-                                <a href="{{ route('users.edit', $user) }}" wire:navigate class="btn-ghost !p-2" title="Edit">
-                                    <x-icon name="pencil-square" class="h-4 w-4" />
-                                </a>
-                                @if ($user->id !== auth()->id())
-                                    <button wire:click="confirmDelete({{ $user->id }})" class="btn-ghost !p-2 text-rose-500 hover:!bg-rose-50 hover:!text-rose-600 dark:hover:!bg-rose-500/10" title="Delete">
-                                        <x-icon name="trash" class="h-4 w-4" />
-                                    </button>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7">
-                            @if ($this->search !== '' || $this->roleFilter !== '')
-                                <x-empty-state icon="search" title="No users match your filters">
-                                    <button wire:click="$set('search', ''); $set('roleFilter', '')" class="btn-ghost text-primary-600 dark:text-primary-400">
-                                        Clear filters
-                                    </button>
-                                </x-empty-state>
-                            @else
-                                <x-empty-state icon="users" title="No users yet" text="Create the first account to let someone log in.">
-                                    <a href="{{ route('users.create') }}" wire:navigate class="btn-primary">
-                                        <x-icon name="plus" class="h-4 w-4" />
-                                        Add your first user
-                                    </a>
-                                </x-empty-state>
-                            @endif
-                        </td>
-                    </tr>
-                @endforelse
-            </x-data-table>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                @if ($this->users->hasPages())
+                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->users->links() }}</div>
+                @endif
+            </div>
         </div>
     </div>
 

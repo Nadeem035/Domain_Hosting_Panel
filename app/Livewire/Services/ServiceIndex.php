@@ -127,30 +127,36 @@ class ServiceIndex extends Component
 
     public function exportCsv()
     {
-        return response()->streamDownload(function () {
-            $out = fopen('php://output', 'w');
+        $services = $this->exportQuery()->get();
+        $rows = $services->map(fn ($s) => [
+            $s->domain_name ?: $s->hostingPlan?->name ?: 'Service #'.$s->id,
+            $s->client?->name,
+            $s->type->label(),
+            $s->panel?->name,
+            $s->hostingPlan?->name,
+            $s->created_date?->toDateString(),
+            $s->expiry_date?->toDateString(),
+            (float) $s->company_price,
+            (float) $s->client_price,
+            $s->profit(),
+            $s->currency,
+            $s->status->label(),
+        ]);
 
-            fputcsv($out, ['Service', 'Client', 'Type', 'Panel', 'Plan', 'Created', 'Expiry', 'Provider cost', 'Client price', 'Profit', 'Currency', 'Status']);
+        $handle = fopen('php://temp', 'r+');
+        fputcsv($handle, ['Service', 'Client', 'Type', 'Panel', 'Plan', 'Created', 'Expiry', 'Provider cost', 'Client price', 'Profit', 'Currency', 'Status']);
+        foreach ($rows as $row) {
+            fputcsv($handle, $row);
+        }
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
 
-            foreach ($this->exportQuery()->get() as $service) {
-                fputcsv($out, [
-                    $service->domain_name ?: $service->hostingPlan?->name ?: 'Service #'.$service->id,
-                    $service->client?->name,
-                    $service->type->label(),
-                    $service->panel?->name,
-                    $service->hostingPlan?->name,
-                    $service->created_date?->toDateString(),
-                    $service->expiry_date?->toDateString(),
-                    (float) $service->company_price,
-                    (float) $service->client_price,
-                    $service->profit(),
-                    $service->currency,
-                    $service->status->label(),
-                ]);
-            }
+        $filename = 'services-'.now()->format('Y-m-d').'.csv';
+        $path = tempnam(sys_get_temp_dir(), 'svc');
+        file_put_contents($path, $csv);
 
-            fclose($out);
-        }, 'services-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
+        return response()->download($path, $filename)->deleteFileAfterSend(true);
     }
 
     public function exportExcel()

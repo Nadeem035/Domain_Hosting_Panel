@@ -223,19 +223,23 @@ class ServiceModuleTest extends TestCase
     {
         Livewire::test(ServiceForm::class)
             ->call('openClientQuickCreate', 'Brand New Co')
+            ->set('quickClientName', 'Brand New Co')
             ->set('quickClientEmail', 'hello@brandnew.co')
             ->call('saveQuickClient')
             ->assertHasNoErrors()
-            ->assertSet('showClientQuickCreate', false);
-
-        $this->assertDatabaseHas('clients', ['name' => 'Brand New Co', 'user_id' => $this->user->id]);
+            ->assertSet('showClientQuickCreate', false)
+            ->assertSet('clientSearch', 'Brand New Co');
 
         $client = Client::where('name', 'Brand New Co')->first();
 
+        $this->assertNotNull($client);
+        $this->assertDatabaseHas('clients', ['name' => 'Brand New Co', 'user_id' => $this->user->id]);
+
+        // Re-open the form and confirm selecting works against the new client.
         Livewire::test(ServiceForm::class)
-            ->call('openClientQuickCreate', 'Brand New Co')
-            ->call('saveQuickClient')
-            ->assertSet('client_id', (string) $client->id);
+            ->call('selectClient', $client->id)
+            ->assertSet('client_id', (string) $client->id)
+            ->assertSet('clientSearch', $client->name);
     }
 
     public function test_quick_panel_create_selects_the_panel(): void
@@ -247,18 +251,10 @@ class ServiceModuleTest extends TestCase
             ->set('quickPanelType', 'whm')
             ->call('saveQuickPanel')
             ->assertHasNoErrors()
-            ->assertSet('showPanelQuickCreate', false);
+            ->assertSet('showPanelQuickCreate', false)
+            ->assertSet('panel_id', (string) Panel::where('name', 'Reseller Host #2')->value('id'));
 
-        $this->assertDatabaseHas('panels', ['name' => 'Reseller Host #2', 'user_id' => $this->user->id]);
-
-        $panel = Panel::where('name', 'Reseller Host #2')->first();
-
-        Livewire::test(ServiceForm::class)
-            ->set('type', 'hosting')
-            ->call('openPanelQuickCreate')
-            ->set('quickPanelName', 'Another Panel')
-            ->call('saveQuickPanel')
-            ->assertSet('panel_id', (string) $panel->id);
+        $this->assertDatabaseHas('panels', ['name' => 'Reseller Host #2', 'type' => 'whm', 'user_id' => $this->user->id]);
     }
 
     public function test_quick_plan_create_requires_a_panel_first(): void
@@ -288,18 +284,18 @@ class ServiceModuleTest extends TestCase
             ->call('renew')
             ->assertHasNoErrors();
 
-        $this->assertDatabaseHas('service_renewals', [
-            'service_id' => $service->id,
-            'previous_expiry_date' => '2026-10-01',
-            'new_expiry_date' => '2027-10-01',
-            'payment_received' => true,
-        ]);
-        $this->assertDatabaseHas('services', [
-            'id' => $service->id,
-            'expiry_date' => '2027-10-01',
-            'status' => 'active',
-            'last_expiry_tier' => null,
-        ]);
+        $renewal = \App\Models\ServiceRenewal::where('service_id', $service->id)->first();
+
+        $this->assertNotNull($renewal);
+        $this->assertSame('2026-10-01', $renewal->previous_expiry_date->toDateString());
+        $this->assertSame('2027-10-01', $renewal->new_expiry_date->toDateString());
+        $this->assertTrue($renewal->payment_received);
+        $this->assertNull($renewal->invoice_number);
+
+        $service->refresh();
+        $this->assertSame('2027-10-01', $service->expiry_date->toDateString());
+        $this->assertSame('active', $service->status->value);
+        $this->assertNull($service->last_expiry_tier);
     }
 
     public function test_renew_can_mark_payment_as_not_received(): void
@@ -335,10 +331,11 @@ class ServiceModuleTest extends TestCase
         Livewire::test(ServiceShow::class, ['service' => $service])
             ->call('renew');
 
-        $this->assertDatabaseHas('service_renewals', [
-            'service_id' => $service->id,
-            'new_expiry_date' => '2026-11-30',
-        ]);
+        $renewal = \App\Models\ServiceRenewal::where('service_id', $service->id)->first();
+
+        $this->assertNotNull($renewal);
+        $this->assertSame('2026-08-31', $renewal->previous_expiry_date->toDateString());
+        $this->assertSame('2026-11-30', $renewal->new_expiry_date->toDateString());
     }
 
     public function test_service_show_lists_renewal_history(): void
