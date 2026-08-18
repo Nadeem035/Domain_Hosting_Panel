@@ -54,6 +54,8 @@
         </div>
 
         <div wire:loading.remove wire:target="tierFilter, sortBy, goToPage, previousPage, nextPage">
+            <div class="card overflow-hidden">
+                <div class="overflow-x-auto">
             <x-data-table :columns="[
                 ['label' => 'Client'],
                 ['key' => 'domain_name', 'label' => 'Domain', 'sortable' => true],
@@ -125,6 +127,12 @@
                     </tr>
                 @endforelse
             </x-data-table>
+                </div>
+
+                @if ($this->services->hasPages())
+                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->services->links() }}</div>
+                @endif
+            </div>
         </div>
     </div>
 </div>

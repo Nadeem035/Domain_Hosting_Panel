@@ -8,8 +8,12 @@ trait WithSorting
 {
     public string $sortDir = 'asc';
 
+    public bool $sortingTouched = false;
+
     public function sortBy(string $column): void
     {
+        $this->sortingTouched = true;
+
         if ($this->sortBy === $column) {
             $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
         } else {

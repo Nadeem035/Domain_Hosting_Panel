@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Billing;
 
+use App\Livewire\Concerns\WithSorting;
 use App\Models\ServiceRenewal;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
@@ -12,6 +13,7 @@ use Livewire\WithPagination;
 class InvoiceIndex extends Component
 {
     use WithPagination;
+    use WithSorting;
 
     public string $search = '';
 
@@ -20,6 +22,8 @@ class InvoiceIndex extends Component
     public string $currency = '';
 
     public int $selectedId = 0;
+
+    public string $sortBy = 'renewed_on';
 
     public function mount(): void
     {
@@ -38,7 +42,11 @@ class InvoiceIndex extends Component
     {
         $query = $this->invoiceQuery()
             ->when($this->search !== '', fn (Builder $q) => $q->where('invoice_number', 'like', '%'.$this->search.'%'))
-            ->latest('renewed_on');
+            ->when(
+                $this->sortingTouched,
+                fn (Builder $q) => $this->applySorting($q, ['renewed_on', 'client_price', 'company_price']),
+                fn (Builder $q) => $q->orderByDesc('renewed_on'),
+            );
 
         return view('livewire.billing.index', [
             'invoices' => $query->paginate(20),

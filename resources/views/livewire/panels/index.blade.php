@@ -38,6 +38,8 @@
         </div>
 
         <div wire:loading.remove wire:target="search, typeFilter, sortBy, goToPage, previousPage, nextPage">
+            <div class="card overflow-hidden">
+                <div class="overflow-x-auto">
             <x-data-table :columns="[
                 ['key' => 'name', 'label' => 'Panel', 'sortable' => true],
                 ['key' => 'host', 'label' => 'Host', 'sortable' => true],
@@ -116,6 +118,12 @@
                     </tr>
                 @endforelse
             </x-data-table>
+                </div>
+
+                @if ($this->panels->hasPages())
+                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->panels->links() }}</div>
+                @endif
+            </div>
         </div>
     </div>
 

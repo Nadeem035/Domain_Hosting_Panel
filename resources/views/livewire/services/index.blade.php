@@ -9,31 +9,31 @@
     </x-page-heading>
 
     {{-- Filters --}}
-    <div class="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div class="relative w-full lg:max-w-xs">
+    <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+        <div class="relative w-full sm:max-w-xs sm:flex-1">
             <x-icon name="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <input type="search" wire:model.live.debounce.300ms="search" placeholder="Search domain or client…"
                 class="input !pl-9">
         </div>
-        <select wire:model.live="typeFilter" class="input lg:w-44">
+        <select wire:model.live="typeFilter" class="input sm:w-44">
             <option value="">All types</option>
             @foreach ($types as $type)
                 <option value="{{ $type->value }}">{{ $type->label() }}</option>
             @endforeach
         </select>
-        <select wire:model.live="statusFilter" class="input lg:w-44">
+        <select wire:model.live="statusFilter" class="input sm:w-44">
             <option value="">All statuses</option>
             @foreach ($statuses as $status)
                 <option value="{{ $status->value }}">{{ $status->label() }}</option>
             @endforeach
         </select>
-        <select wire:model.live="panelFilter" class="input lg:w-48">
+        <select wire:model.live="panelFilter" class="input sm:w-48">
             <option value="">All panels</option>
             @foreach ($panels as $panel)
                 <option value="{{ $panel->id }}">{{ $panel->name }}</option>
             @endforeach
         </select>
-        <div class="flex gap-2 lg:ml-auto">
+        <div class="flex gap-2 sm:ml-auto">
             <button wire:click="exportCsv" class="btn-secondary !px-3 text-xs" title="Export CSV">
                 <x-icon name="arrow-down-tray" class="h-4 w-4" />
                 CSV
@@ -64,6 +64,8 @@
         </div>
 
         <div wire:loading.remove wire:target="search, typeFilter, statusFilter, panelFilter, sortBy, goToPage, previousPage, nextPage">
+            <div class="card overflow-hidden">
+                <div class="overflow-x-auto">
             <x-data-table :columns="[
                 ['key' => 'domain_name', 'label' => 'Service', 'sortable' => true],
                 ['label' => 'Client'],
@@ -172,6 +174,12 @@
                     </tr>
                 @endforelse
             </x-data-table>
+                </div>
+
+                @if ($this->services->hasPages())
+                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->services->links() }}</div>
+                @endif
+            </div>
         </div>
     </div>
 

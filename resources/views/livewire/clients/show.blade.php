@@ -106,31 +106,39 @@
                         Add service
                     </a>
                 </div>
+                <div class="grid grid-cols-1 gap-x-4 gap-y-1 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 sm:grid-cols-[1.5fr_1fr_1fr_auto]">
+                    <span>Service</span>
+                    <span class="text-right">Client price</span>
+                    <span class="text-right">Expires</span>
+                    <span class="text-right">Status</span>
+                </div>
                 <div class="divide-y divide-zinc-100 dark:divide-zinc-800/80">
                     @forelse ($this->services as $service)
                         <a href="{{ route('services.show', $service['id']) }}" wire:navigate
-                            class="flex flex-wrap items-center gap-3 px-5 py-4 transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
-                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
-                                <x-icon :name="$service['type']->involvesDomain() ? 'globe' : 'server'" class="h-4 w-4" />
+                            class="table-row grid grid-cols-1 gap-2 px-5 py-4 transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 sm:grid-cols-[1.5fr_1fr_1fr_auto] sm:items-center">
+                            <span class="flex min-w-0 items-center gap-3">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
+                                    <x-icon :name="$service['type']->involvesDomain() ? 'globe' : 'server'" class="h-4 w-4" />
+                                </span>
+                                <span class="min-w-0">
+                                    <span class="block truncate font-semibold text-zinc-900 dark:text-zinc-100">
+                                        {{ $service['domain_name'] ?? $service['type']->label() }}
+                                    </span>
+                                    <span class="block truncate text-xs text-zinc-400 dark:text-zinc-500">
+                                        {{ $service['panel_name'] ?? '—' }}{{ $service['plan_name'] ? ' · ' . $service['plan_name'] : '' }}
+                                    </span>
+                                </span>
                             </span>
-                            <span class="min-w-0 flex-1">
-                                <span class="block truncate font-semibold text-zinc-900 dark:text-zinc-100">
-                                    {{ $service['domain_name'] ?? $service['type']->label() }}
-                                </span>
-                                <span class="block truncate text-xs text-zinc-400 dark:text-zinc-500">
-                                    {{ $service['panel_name'] ?? '—' }}{{ $service['plan_name'] ? ' · ' . $service['plan_name'] : '' }}
-                                </span>
+                            <span class="text-right text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                                {{ number_format((float) $service['client_price'], 2) }} {{ $service['currency'] }}
+                            </span>
+                            <span class="text-right text-sm text-zinc-600 dark:text-zinc-300">
+                                Expires {{ $service['expiry_date']->format('M j, Y') }}
                             </span>
                             <span class="text-right">
-                                <span class="block text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                                    {{ number_format((float) $service['client_price'], 2) }} {{ $service['currency'] }}
-                                </span>
-                                <span class="block text-xs text-zinc-400 dark:text-zinc-500">
-                                    Expires {{ $service['expiry_date']->format('M j, Y') }}
-                                </span>
+                                <x-tier-badge :tier="$service['tier']"
+                                    :label="$service['tier'] ? $service['days_left'] . 'd · ' . $service['tier']->label() : $service['status']->label()" />
                             </span>
-                            <x-tier-badge :tier="$service['tier']"
-                                :label="$service['tier'] ? $service['days_left'] . 'd · ' . $service['tier']->label() : $service['status']->label()" />
                         </a>
                     @empty
                         <div class="px-6 py-12 text-center">
