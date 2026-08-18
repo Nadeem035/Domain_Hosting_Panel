@@ -57,6 +57,17 @@ class ClientIndex extends Component
     }
 
     #[Computed]
+    public function statusCounts(): array
+    {
+        return [
+            'all' => Client::query()->count(),
+            ...collect(ClientStatus::cases())->mapWithKeys(fn ($status) => [
+                $status->value => Client::query()->where('status', $status->value)->count(),
+            ]),
+        ];
+    }
+
+    #[Computed]
     public function clients()
     {
         $query = Client::query()
