@@ -353,8 +353,10 @@ class ServiceModuleTest extends TestCase
         $client = $this->makeClient();
         Service::factory()->for($this->user)->for($client)->count(2)->create();
 
-        Livewire::test(ServiceIndex::class)->call('exportCsv')->assertDownload();
-        Livewire::test(ServiceIndex::class)->call('exportPdf')->assertDownload();
-        Livewire::test(ServiceIndex::class)->call('exportExcel')->assertDownload();
+        $filename = 'services-'.now()->format('Y-m-d');
+
+        Livewire::test(ServiceIndex::class)->call('exportCsv')->assertFileDownloaded($filename.'.csv');
+        Livewire::test(ServiceIndex::class)->call('exportPdf')->assertFileDownloaded($filename.'.pdf');
+        Livewire::test(ServiceIndex::class)->call('exportExcel')->assertFileDownloaded($filename.'.xlsx');
     }
 }

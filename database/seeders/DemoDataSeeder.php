@@ -10,6 +10,7 @@ use App\Models\Client;
 use App\Models\HostingPlan;
 use App\Models\Panel;
 use App\Models\Service;
+use App\Models\ServiceRenewal;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
@@ -109,5 +110,33 @@ class DemoDataSeeder extends Seeder
             'type' => ServiceType::Both,
             'status' => ServiceStatus::Cancelled,
         ]);
+
+        $this->seedRenewals($user);
+    }
+
+    /**
+     * Give each non-cancelled service a renewal history so the invoices page
+     * and the revenue chart have something to show.
+     */
+    private function seedRenewals(User $user): void
+    {
+        $services = Service::where('user_id', $user->id)
+            ->where('status', '!=', ServiceStatus::Cancelled->value)
+            ->get();
+
+        foreach ($services as $index => $service) {
+            if ($index === 0) {
+                continue;
+            }
+
+            $paid = $index % 3 !== 0;
+
+            ServiceRenewal::factory()->for($service)->create([
+                'user_id' => $user->id,
+                'payment_received' => $paid,
+                'payment_received_date' => $paid ? now()->subDays($index * 4 + 3)->toDateString() : null,
+                'invoice_number' => 'INV-'.$user->id.'-'.str_pad((string) $index, 3, '0', STR_PAD_LEFT),
+            ]);
+        }
     }
 }

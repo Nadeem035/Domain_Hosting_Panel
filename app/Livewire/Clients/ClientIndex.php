@@ -69,6 +69,9 @@ class ClientIndex extends Component
                     ->orWhere('company', 'like', "%{$this->search}%")
                     ->orWhere('phone', 'like', "%{$this->search}%")))
             ->when($this->statusFilter !== '', fn ($q) => $q->where('status', $this->statusFilter));
+
+        return $this->applySorting($query, ['name', 'status', 'active_revenue', 'active_services_count'])
+            ->paginate(12);
     }
 
     public function render()

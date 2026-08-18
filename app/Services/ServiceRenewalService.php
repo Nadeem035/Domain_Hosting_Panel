@@ -23,6 +23,7 @@ final class ServiceRenewalService
         $paymentReceived = (bool) ($data['payment_received'] ?? true);
 
         $renewal = ServiceRenewal::create([
+            'user_id' => $service->user_id,
             'service_id' => $service->id,
             'renewed_on' => Carbon::today()->toDateString(),
             'previous_expiry_date' => $previousExpiry->toDateString(),
@@ -39,7 +40,7 @@ final class ServiceRenewalService
             'expiry_date' => $newExpiry->toDateString(),
             'status' => ServiceStatus::Active,
             'last_expiry_tier' => null,
-            'last_payment_tier' => null,
+            'last_payment_tier' => ReminderTierCalculator::tierFor($previousExpiry)?->value,
             'last_notified_at' => null,
         ]);
 

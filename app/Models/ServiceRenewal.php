@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToTenant;
 use Database\Factories\ServiceRenewalFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,9 +13,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class ServiceRenewal extends Model
 {
     /** @use HasFactory<ServiceRenewalFactory> */
-    use HasFactory, LogsActivity;
+    use BelongsToTenant, HasFactory, LogsActivity;
 
     protected $fillable = [
+        'user_id',
         'service_id',
         'renewed_on',
         'previous_expiry_date',

@@ -5,13 +5,15 @@ use App\Livewire\Pages\Settings\Settings;
 use App\Livewire\Clients\ClientIndex;
 use App\Livewire\Clients\ClientShow;
 use App\Livewire\Clients\ClientForm;
+use App\Livewire\Audit\AuditIndex;
+use App\Livewire\Billing\InvoiceIndex;
 use App\Livewire\Panels\PanelIndex;
 use App\Livewire\Panels\PanelForm;
 use App\Livewire\Panels\PanelShow;
+use App\Livewire\Reports\ReportIndex;
 use App\Livewire\Services\ServiceIndex;
 use App\Livewire\Services\ServiceForm;
 use App\Livewire\Services\ServiceShow;
-use App\Livewire\Reports\ReportIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -48,6 +50,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', App\Livewire\Users\UserIndex::class)->name('index');
         Route::get('/create', App\Livewire\Users\UserForm::class)->name('create');
         Route::get('/{user}/edit', App\Livewire\Users\UserForm::class)->name('edit');
+    });
+
+    Route::prefix('audit')->name('audit.')->group(function () {
+        Route::get('/', AuditIndex::class)->name('index');
+    });
+
+    Route::prefix('invoices')->name('invoices.')->group(function () {
+        Route::get('/', InvoiceIndex::class)->name('index');
     });
 
     Route::prefix('settings')->name('settings.')->group(function () {

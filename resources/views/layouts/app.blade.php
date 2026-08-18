@@ -34,11 +34,13 @@
                 ['name' => 'Services', 'icon' => 'services', 'route' => 'services.index', 'pattern' => 'services'],
                 ['name' => 'Panels & Plans', 'icon' => 'panels', 'route' => 'panels.index', 'pattern' => 'panels'],
                 ['name' => 'Reports', 'icon' => 'reports', 'route' => 'reports.index', 'pattern' => 'reports'],
+                ['name' => 'Invoices', 'icon' => 'credit-card', 'route' => 'invoices.index', 'pattern' => 'invoices'],
+                ['name' => 'Activity', 'icon' => 'clock', 'route' => 'audit.index', 'pattern' => 'audit'],
                 ['name' => 'Settings', 'icon' => 'settings', 'route' => 'settings.index', 'pattern' => 'settings'],
             ];
 
             if (auth()->user()?->hasRole('admin')) {
-                array_splice($nav, 5, 0, [['name' => 'Users', 'icon' => 'users', 'route' => 'users.index', 'pattern' => 'users']]);
+                array_splice($nav, 6, 0, [['name' => 'Users', 'icon' => 'users', 'route' => 'users.index', 'pattern' => 'users']]);
             }
         @endphp
 

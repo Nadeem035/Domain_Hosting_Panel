@@ -166,10 +166,17 @@ class ServiceIndex extends Component
 
     public function exportPdf()
     {
-        return Pdf::loadView('exports.services-pdf', [
+        $pdf = Pdf::loadView('exports.services-pdf', [
             'services' => $this->exportQuery()->get(),
             'currency' => auth()->user()->defaultCurrency(),
-        ])->download('services-'.now()->format('Y-m-d').'.pdf');
+        ]);
+
+        $filename = 'services-'.now()->format('Y-m-d').'.pdf';
+        $path = tempnam(sys_get_temp_dir(), 'svc');
+        file_put_contents($path, $pdf->output());
+
+        return response()->download($path, $filename, ['Content-Type' => 'application/pdf'])
+            ->deleteFileAfterSend(true);
     }
 
     #[Computed]
