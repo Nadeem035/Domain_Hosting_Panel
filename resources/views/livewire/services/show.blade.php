@@ -1,5 +1,6 @@
 <div>
     @php($tier = $this->tier)
+    @php($profit = (float) $service->client_price - (float) $service->company_price)
     <x-page-heading :title="$service->domain_name ?: $service->hostingPlan?->name ?: 'Service #' . $service->id"
         :subtitle="$service->client?->name . ' · ' . $service->type->label()">
         <x-slot:actions>
@@ -13,6 +14,50 @@
             </button>
         </x-slot:actions>
     </x-page-heading>
+
+    {{-- Key stats --}}
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="card p-5">
+            <p class="text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                Client price
+                @if ($service->hostingPlan?->billing_cycle)
+                    <span class="ml-1 font-normal normal-case tracking-normal text-zinc-400/80 dark:text-zinc-500">{{ $service->hostingPlan->billing_cycle->label() }}</span>
+                @endif
+            </p>
+            <p class="mt-1.5 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
+                {{ number_format((float) $service->client_price, 2) }} <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500">{{ $service->currency }}</span>
+            </p>
+        </div>
+        <div class="card p-5">
+            <p class="text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Profit</p>
+            <p class="mt-1.5 text-2xl font-bold tabular-nums {{ $profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                @if ($profit >= 0)+@endif{{ number_format($profit, 2) }} <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500">{{ $service->currency }}</span>
+            </p>
+            <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">cost {{ number_format((float) $service->company_price, 2) }}</p>
+        </div>
+        <div class="card p-5">
+            <p class="text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Expires</p>
+            <p class="mt-1.5 text-lg font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
+                {{ $service->expiry_date?->format('M j, Y') ?? '—' }}
+            </p>
+            @if ($service->expiry_date)
+                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                    {{ $this->daysLeft >= 0 ? $this->daysLeft.' days left' : abs($this->daysLeft).' days overdue' }}
+                </p>
+            @endif
+        </div>
+        <div class="card p-5">
+            <p class="text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Renewals</p>
+            <p class="mt-1.5 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{{ $renewals->total() }}</p>
+            <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                @if ($renewals->total() > 0)
+                    {{ $this->service->renewals()->where('payment_received', false)->count() }} unpaid
+                @else
+                    No renewals yet
+                @endif
+            </p>
+        </div>
+    </div>
 
     <div class="mt-6 grid gap-4 lg:grid-cols-[1fr_2fr]">
         {{-- Service details --}}
@@ -81,22 +126,17 @@
                         <dd class="font-medium text-zinc-800 dark:text-zinc-200">
                             {{ $service->created_date?->format('M j, Y') }} → {{ $service->expiry_date?->format('M j, Y') }}
                         </dd>
-                        <dd class="text-xs text-zinc-400">
-                            @if ($tier)
-                                {{ $this->daysLeft >= 0 ? $this->daysLeft.' days left' : abs($this->daysLeft).' days overdue' }} · {{ $tier->label() }}
-                            @else
-                                More than 30 days out
-                            @endif
-                        </dd>
+                        @if ($tier)
+                            <dd class="text-xs text-zinc-400">{{ $tier->label() }}</dd>
+                        @endif
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
                     <x-icon name="currency-dollar" class="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Pricing</dt>
-                        <dd class="font-medium text-zinc-800 dark:text-zinc-200">
+                        <dd class="font-medium tabular-nums text-zinc-800 dark:text-zinc-200">
                             {{ number_format((float) $service->client_price, 2) }} {{ $service->currency }}
-                            <span class="text-xs font-normal text-zinc-400">(cost {{ number_format((float) $service->company_price, 2) }})</span>
                         </dd>
                     </div>
                 </div>
@@ -127,48 +167,39 @@
         </div>
 
         {{-- Renewal history --}}
-        <div class="card overflow-hidden">
-            <div class="flex items-center justify-between border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-                <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Renewal history</h2>
-                <span class="badge bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{{ $service->renewals()->count() }}</span>
-            </div>
-
-            <div class="grid grid-cols-1 gap-x-4 gap-y-1 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 sm:grid-cols-[1fr_1.5fr_1fr_1fr_1fr]">
-                <span>Renewed</span>
-                <span>Expiry change</span>
-                <span>Client price</span>
-                <span>Payment</span>
-                <span>Invoice</span>
-            </div>
-
-            @forelse ($this->renewals as $renewal)
-                <div class="table-row grid grid-cols-1 gap-2 px-5 py-4 sm:grid-cols-[1fr_1.5fr_1fr_1fr_1fr] sm:items-center">
-                    <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200">{{ $renewal->renewed_on?->format('M j, Y') }}</div>
-                    <div class="text-sm text-zinc-600 dark:text-zinc-300">
+        <x-data-table count-label="renewal" :rows="$renewals" :columns="[
+            ['key' => 'renewed_on', 'label' => 'Renewed'],
+            ['key' => 'expiry', 'label' => 'Expiry change'],
+            ['key' => 'client_price', 'label' => 'Client price', 'class' => 'text-right'],
+            ['key' => 'payment', 'label' => 'Payment'],
+            ['key' => 'invoice', 'label' => 'Invoice', 'class' => 'text-right'],
+        ]">
+            @forelse ($renewals as $renewal)
+                <tr class="transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                    <td class="whitespace-nowrap px-5 py-4 font-medium text-zinc-800 dark:text-zinc-200">{{ $renewal->renewed_on?->format('M j, Y') }}</td>
+                    <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300">
                         {{ $renewal->previous_expiry_date?->format('M j, Y') }}
                         <x-icon name="arrow-right" class="mx-1 inline h-3.5 w-3.5 text-zinc-400" />
                         {{ $renewal->new_expiry_date?->format('M j, Y') }}
-                    </div>
-                    <div class="text-sm text-zinc-600 dark:text-zinc-300">{{ number_format((float) $renewal->client_price, 2) }} {{ $service->currency }}</div>
-                    <div>
+                    </td>
+                    <td class="whitespace-nowrap px-5 py-4 text-right tabular-nums text-zinc-600 dark:text-zinc-300">
+                        {{ number_format((float) $renewal->client_price, 2) }} <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ $service->currency }}</span>
+                    </td>
+                    <td class="whitespace-nowrap px-5 py-4">
                         <span class="badge {{ $renewal->payment_received ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400' }}">
                             {{ $renewal->payment_received ? 'Paid' : 'Unpaid' }}
                         </span>
-                    </div>
-                    <div class="text-sm text-zinc-600 dark:text-zinc-300">{{ $renewal->invoice_number ?? '—' }}</div>
-                </div>
+                    </td>
+                    <td class="whitespace-nowrap px-5 py-4 text-right tabular-nums text-zinc-600 dark:text-zinc-300">{{ $renewal->invoice_number ?? '—' }}</td>
+                </tr>
             @empty
-                <div class="px-6 py-12 text-center">
-                    <x-icon name="arrow-path" class="mx-auto h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-                    <p class="mt-4 text-sm font-medium text-zinc-600 dark:text-zinc-300">No renewals yet</p>
-                    <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Renewing this service records its history here.</p>
-                </div>
+                <tr>
+                    <td colspan="5">
+                        <x-empty-state icon="arrow-path" title="No renewals yet" text="Renewing this service records its history here." />
+                    </td>
+                </tr>
             @endforelse
-
-            @if ($this->renewals->hasPages())
-                <div class="px-5 pb-4">{{ $this->renewals->links() }}</div>
-            @endif
-        </div>
+        </x-data-table>
     </div>
 
     {{-- Delete confirmation --}}

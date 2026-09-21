@@ -4,10 +4,12 @@ namespace App\Livewire\Users;
 
 use App\Models\User;
 use Illuminate\Validation\Rules;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
+#[Layout('layouts.app')]
 class UserForm extends Component
 {
     #[Locked]

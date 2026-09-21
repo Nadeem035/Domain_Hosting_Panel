@@ -90,20 +90,51 @@
 
                 @if (in_array($this->type, ['hosting', 'both']))
                     {{-- Panel --}}
-                    <div>
-                        <x-input-label for="panel_id" value="Panel" required />
-                        <div class="flex gap-2">
-                            <select id="panel_id" wire:model.live="panel_id" class="input mt-1.5 flex-1">
-                                <option value="">— Select a panel —</option>
-                                @foreach ($panels as $panel)
-                                    <option value="{{ $panel->id }}">{{ $panel->name }}</option>
-                                @endforeach
-                            </select>
-                            <button type="button" wire:click="openPanelQuickCreate" title="Add a new panel"
-                                class="btn-secondary mt-1.5 !px-3">
-                                <x-icon name="plus" class="h-4 w-4" />
-                            </button>
+                    <div class="relative" wire:click.outside="$set('showPanelDropdown', false)">
+                        <x-input-label value="Panel" required />
+                        <div class="relative mt-1.5">
+                            <x-text-input wire:model.live="panelSearch" wire:focus="$set('showPanelDropdown', true)"
+                                class="w-full !pr-10" placeholder="Search by name, host or IP…" autocomplete="off" />
+                            <x-icon name="search" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                         </div>
+                        @if ($showPanelDropdown)
+                            <div class="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                                <div class="max-h-56 overflow-auto">
+                                    @forelse ($this->panelOptions as $panel)
+                                        <button type="button" wire:click="selectPanel({{ $panel->id }})"
+                                            class="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700/60">
+                                            <span class="min-w-0">
+                                                <span class="block truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{{ $panel->name }}</span>
+                                                <span class="block truncate text-xs text-zinc-400">
+                                                    {{ collect([$panel->type?->label(), $panel->host, $panel->ip_address])->filter()->implode(' · ') ?: 'No connection details' }}
+                                                </span>
+                                            </span>
+                                            <span class="badge shrink-0 {{ $panel->is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300' }}">
+                                                {{ $panel->is_active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </button>
+                                    @empty
+                                        <div class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+                                            No panels match.
+                                            <button type="button" wire:click="openPanelQuickCreate" class="font-semibold text-primary-600 hover:text-primary-500">Add a new panel</button>
+                                        </div>
+                                    @endforelse
+                                </div>
+                                <div class="border-t border-zinc-100 bg-zinc-50/60 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900/40">
+                                    <button type="button" wire:click="openPanelQuickCreate"
+                                        class="text-xs font-semibold text-primary-600 hover:text-primary-500">
+                                        <x-icon name="plus" class="mr-1 inline h-3.5 w-3.5" />
+                                        Add a new panel
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+                        @if ($panel_id)
+                            <div class="mt-1.5 flex items-center gap-2">
+                                <span class="badge bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">{{ $panelSearch }}</span>
+                                <button type="button" wire:click="clearPanel" class="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">Clear</button>
+                            </div>
+                        @endif
                         <x-input-error :messages="$errors->get('panel_id')" class="mt-1" />
                     </div>
 

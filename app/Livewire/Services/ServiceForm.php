@@ -34,6 +34,10 @@ class ServiceForm extends Component
 
     public string $panel_id = '';
 
+    public string $panelSearch = '';
+
+    public bool $showPanelDropdown = false;
+
     public string $hosting_plan_id = '';
 
     public string $planSearch = '';
@@ -90,6 +94,7 @@ class ServiceForm extends Component
             $this->clientSearch = $service->client?->name ?? '';
             $this->type = $service->type->value;
             $this->panel_id = $service->panel_id ? (string) $service->panel_id : '';
+            $this->panelSearch = $service->panel?->name ?? '';
             $this->hosting_plan_id = $service->hosting_plan_id ? (string) $service->hosting_plan_id : '';
             $this->planSearch = $service->hostingPlan?->name ?? '';
             $this->domain_name = $service->domain_name ?? '';
@@ -220,6 +225,30 @@ class ServiceForm extends Component
         $this->planSearch = '';
     }
 
+    public function selectPanel(int $id): void
+    {
+        $panel = Panel::find($id);
+
+        if (! $panel) {
+            return;
+        }
+
+        $this->panel_id = (string) $panel->id;
+        $this->panelSearch = $panel->name;
+        $this->showPanelDropdown = false;
+        $this->hosting_plan_id = '';
+        $this->planSearch = '';
+        $this->suggestExpiry();
+    }
+
+    public function clearPanel(): void
+    {
+        $this->panel_id = '';
+        $this->panelSearch = '';
+        $this->hosting_plan_id = '';
+        $this->planSearch = '';
+    }
+
     private function suggestExpiry(): void
     {
         if (! $this->hosting_plan_id || ! $this->created_date) {
@@ -285,6 +314,7 @@ class ServiceForm extends Component
         ]);
 
         $this->panel_id = (string) $panel->id;
+        $this->panelSearch = $panel->name;
         $this->showPanelQuickCreate = false;
         $this->quickPanelName = '';
         $this->quickPanelHost = '';
@@ -353,12 +383,24 @@ class ServiceForm extends Component
             ->get();
     }
 
+    #[Computed]
+    public function panelOptions()
+    {
+        return Panel::query()
+            ->when($this->panelSearch, fn ($q) => $q->where(fn ($inner) => $inner
+                ->where('name', 'like', "%{$this->panelSearch}%")
+                ->orWhere('host', 'like', "%{$this->panelSearch}%")
+                ->orWhere('ip_address', 'like', "%{$this->panelSearch}%")))
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+    }
+
     public function render()
     {
         return view('livewire.services.form', [
             'types' => ServiceType::cases(),
             'statuses' => ServiceStatus::cases(),
-            'panels' => Panel::query()->orderBy('name')->get(),
             'cycles' => BillingCycle::cases(),
             'panelTypes' => PanelType::cases(),
         ]);

@@ -181,6 +181,7 @@ class PanelShow extends Component
             'plan_count' => $plans->count(),
             'active_plan_count' => $plans->where('is_active', true)->count(),
             'service_count' => $this->panel->services()->where('status', 'active')->count(),
+            'total_active_plan_cost' => $plans->where('is_active', true)->sum('price'),
         ];
     }
 

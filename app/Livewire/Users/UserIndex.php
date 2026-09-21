@@ -5,11 +5,13 @@ namespace App\Livewire\Users;
 use App\Livewire\Concerns\WithSorting;
 use App\Models\User;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 
+#[Layout('layouts.app')]
 class UserIndex extends Component
 {
     use WithPagination, WithSorting;
