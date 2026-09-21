@@ -57,30 +57,17 @@
         </div>
 
         <div wire:loading.remove wire:target="search, statusFilter, sortBy, goToPage, previousPage, nextPage">
-            <div class="card overflow-hidden">
-                <div class="flex items-center justify-between border-b border-zinc-100 px-5 py-3.5 dark:border-zinc-800">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                        <span class="font-semibold text-zinc-900 dark:text-zinc-100">{{ $this->clients->total() }}</span>
-                        client{{ $this->clients->total() === 1 ? '' : 's' }}
-                    </p>
-                    <p class="text-xs text-zinc-400 dark:text-zinc-500">
-                        Page {{ $this->clients->currentPage() }} of {{ $this->clients->lastPage() }}
-                    </p>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <x-data-table :columns="[
-                            ['key' => 'name', 'label' => 'Client', 'sortable' => true],
-                            ['key' => 'email', 'label' => 'Contact', 'sortable' => true],
-                            ['key' => 'status', 'label' => 'Status', 'sortable' => true],
-                            ['key' => 'active_services_count', 'label' => 'Active services', 'sortable' => true, 'class' => 'text-right'],
-                            ['key' => 'active_revenue', 'label' => 'Monthly revenue', 'sortable' => true, 'class' => 'text-right'],
-                            ['label' => '', 'class' => 'text-right'],
-                        ]" :sort-by="$this->sortBy" :sort-dir="$this->sortDir" />
-                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            @forelse ($this->clients as $client)
+            <x-data-table :columns="[
+                ['key' => 'name', 'label' => 'Client', 'sortable' => true],
+                ['key' => 'email', 'label' => 'Contact', 'sortable' => true],
+                ['key' => 'status', 'label' => 'Status', 'sortable' => true],
+                ['key' => 'active_services_count', 'label' => 'Active services', 'sortable' => true, 'class' => 'text-right'],
+                ['key' => 'active_revenue', 'label' => 'Monthly revenue', 'sortable' => true, 'class' => 'text-right'],
+                ['label' => '', 'class' => 'text-right'],
+            ]" count-label="client" :rows="$this->clients" :sort-by="$this->sortBy" :sort-dir="$this->sortDir">
+                @forelse ($this->clients as $client)
                                 @php($avatar = ['from-violet-500 to-fuchsia-600', 'from-sky-500 to-indigo-600', 'from-emerald-500 to-teal-600', 'from-amber-500 to-orange-600', 'from-rose-500 to-pink-600'][abs(crc32($client->name)) % 5])
-                                <tr class="group transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                                <tr class="group transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                                     <td class="px-5 py-4">
                                         <div class="flex min-w-0 items-center gap-3">
                                             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br {{ $avatar }} text-sm font-bold text-white shadow-sm">
@@ -155,14 +142,7 @@
                                     </td>
                                 </tr>
                             @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if ($this->clients->hasPages())
-                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->clients->links() }}</div>
-                @endif
-            </div>
+            </x-data-table>
         </div>
     </div>
 

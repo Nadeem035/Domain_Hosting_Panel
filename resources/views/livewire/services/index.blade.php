@@ -64,9 +64,7 @@
         </div>
 
         <div wire:loading.remove wire:target="search, typeFilter, statusFilter, panelFilter, sortBy, goToPage, previousPage, nextPage">
-            <div class="card overflow-hidden">
-                <div class="overflow-x-auto">
-            <x-data-table :columns="[
+            <x-data-table count-label="service" :columns="[
                 ['key' => 'domain_name', 'label' => 'Service', 'sortable' => true],
                 ['label' => 'Client'],
                 ['key' => 'type', 'label' => 'Type', 'sortable' => true],
@@ -78,7 +76,7 @@
             ]" :rows="$this->services" :sort-by="$this->sortBy" :sort-dir="$this->sortDir">
                 @forelse ($this->services as $service)
                     @php($tier = $tierFor($service->expiry_date))
-                    <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                    <tr class="transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                         <td class="px-5 py-4">
                             <div class="flex min-w-0 items-center gap-3">
                                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">
@@ -115,10 +113,10 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="whitespace-nowrap px-5 py-4 text-right text-zinc-600 dark:text-zinc-300">
+                        <td class="whitespace-nowrap px-5 py-4 text-right tabular-nums text-zinc-600 dark:text-zinc-300">
                             {{ number_format((float) $service->company_price, 2) }} <span class="text-xs text-zinc-400">{{ $service->currency }}</span>
                         </td>
-                        <td class="whitespace-nowrap px-5 py-4 text-right">
+                        <td class="whitespace-nowrap px-5 py-4 text-right tabular-nums">
                             <span class="block font-medium text-zinc-800 dark:text-zinc-200">{{ number_format((float) $service->client_price, 2) }} <span class="text-xs text-zinc-400">{{ $service->currency }}</span></span>
                             @if ($service->profit() > 0)
                                 <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">+{{ number_format($service->profit(), 2) }}</span>
@@ -174,12 +172,6 @@
                     </tr>
                 @endforelse
             </x-data-table>
-                </div>
-
-                @if ($this->services->hasPages())
-                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->services->links() }}</div>
-                @endif
-            </div>
         </div>
     </div>
 

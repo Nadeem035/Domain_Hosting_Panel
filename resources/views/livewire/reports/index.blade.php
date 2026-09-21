@@ -54,9 +54,7 @@
         </div>
 
         <div wire:loading.remove wire:target="tierFilter, sortBy, goToPage, previousPage, nextPage">
-            <div class="card overflow-hidden">
-                <div class="overflow-x-auto">
-            <x-data-table :columns="[
+            <x-data-table count-label="service" :columns="[
                 ['label' => 'Client'],
                 ['key' => 'domain_name', 'label' => 'Domain', 'sortable' => true],
                 ['key' => 'type', 'label' => 'Type', 'sortable' => true],
@@ -66,7 +64,7 @@
                 ['key' => 'client_price', 'label' => 'Price', 'sortable' => true, 'class' => 'text-right'],
             ]" :rows="$this->services" :sort-by="$this->sortBy" :sort-dir="$this->sortDir">
                 @forelse ($this->services as $service)
-                    <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                    <tr class="transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                         <td class="max-w-[180px] px-5 py-4 text-zinc-600 dark:text-zinc-300">
                             @if ($service->client)
                                 <a href="{{ route('clients.show', $service->client) }}" wire:navigate class="block truncate hover:text-primary-600 dark:hover:text-primary-400">
@@ -107,7 +105,7 @@
                                 <span class="text-zinc-400 dark:text-zinc-500">—</span>
                             @endif
                         </td>
-                        <td class="whitespace-nowrap px-5 py-4 text-right font-semibold text-zinc-800 dark:text-zinc-200">
+                        <td class="whitespace-nowrap px-5 py-4 text-right tabular-nums font-semibold text-zinc-800 dark:text-zinc-200">
                             {{ number_format((float) ($service->client_price ?? 0), 2) }} {{ auth()->user()->defaultCurrency() }}
                         </td>
                     </tr>
@@ -127,12 +125,6 @@
                     </tr>
                 @endforelse
             </x-data-table>
-                </div>
-
-                @if ($this->services->hasPages())
-                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->services->links() }}</div>
-                @endif
-            </div>
         </div>
     </div>
 </div>

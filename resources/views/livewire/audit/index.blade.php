@@ -25,19 +25,15 @@
         </div>
 
         <div wire:loading.remove wire:target="search, goToPage, previousPage, nextPage">
-            <div class="card overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <x-data-table :columns="[
-                            ['label' => 'Time'],
-                            ['label' => 'Actor'],
-                            ['label' => 'Event'],
-                            ['label' => 'Subject'],
-                            ['label' => 'Details'],
-                        ]" />
-                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            @forelse ($activities as $activity)
-                                <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+            <x-data-table :columns="[
+                ['label' => 'Time'],
+                ['label' => 'Actor'],
+                ['label' => 'Event'],
+                ['label' => 'Subject'],
+                ['label' => 'Details'],
+            ]" :rows="$activities">
+                @forelse ($activities as $activity)
+                                <tr class="transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                                     <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300">
                                         {{ $activity->created_at->diffForHumans() }}
                                     </td>
@@ -85,14 +81,7 @@
                                     </td>
                                 </tr>
                             @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if ($activities->hasPages())
-                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $activities->links() }}</div>
-                @endif
-            </div>
+            </x-data-table>
         </div>
     </div>
 </div>

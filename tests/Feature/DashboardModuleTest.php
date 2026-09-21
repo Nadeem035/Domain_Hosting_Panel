@@ -139,24 +139,67 @@ class DashboardModuleTest extends TestCase
         $this->actingAs($this->user);
 
         $stats = Livewire::test(Dashboard::class)->instance()->stats;
-        $expiringSoon = Livewire::test(Dashboard::class)->instance()->expiringSoon;
+        $attention = Livewire::test(Dashboard::class)->instance()->attentionList;
 
         $this->assertSame(1, $stats['active_services']);
         $this->assertSame(1, $stats['total_clients']);
         $this->assertSame(0.0, $stats['monthly_revenue']);
         $this->assertSame(1, $stats['upcoming_renewals']);
-        $this->assertCount(1, $expiringSoon);
+        $this->assertCount(1, $attention);
     }
 
-    public function test_dashboard_expiring_soon_lists_urgent_services_sorted(): void
+    public function test_dashboard_attention_list_sorts_urgent_services_sorted(): void
     {
         $later = $this->service(['expiry_date' => now()->addDays(9)->toDateString()]);
         $sooner = $this->service(['expiry_date' => now()->addDays(2)->toDateString()]);
 
-        $expiringSoon = Livewire::test(Dashboard::class)->instance()->expiringSoon;
+        $attention = Livewire::test(Dashboard::class)->instance()->attentionList;
 
-        $this->assertCount(2, $expiringSoon);
-        $this->assertSame($sooner->id, $expiringSoon[0]->id);
-        $this->assertSame($later->id, $expiringSoon[1]->id);
+        $this->assertCount(2, $attention);
+        $this->assertSame($sooner->id, $attention[0]->id);
+        $this->assertSame($later->id, $attention[1]->id);
+    }
+
+    public function test_dashboard_renewal_snapshot_counts_tiers_within_window(): void
+    {
+        $this->service(['expiry_date' => now()->subDays(5)->toDateString()]);
+        $this->service(['expiry_date' => now()->subDays(1)->toDateString()]);
+        $this->service(['expiry_date' => now()->addDays(3)->toDateString()]);
+        $this->service(['expiry_date' => now()->addDays(20)->toDateString()]);
+        $this->service(['expiry_date' => now()->addDays(40)->toDateString()]);
+
+        $component = Livewire::test(Dashboard::class)->instance();
+
+        $this->assertSame(
+            ['expired' => 2, 'urgent' => 1, 'due_soon' => 0, 'upcoming' => 1],
+            $component->renewalSnapshot,
+        );
+        $this->assertSame(4, $component->stats['upcoming_renewals']);
+    }
+
+    public function test_dashboard_attention_list_sorts_expired_first_then_nearest(): void
+    {
+        $expiredOld = $this->service(['expiry_date' => now()->subDays(5)->toDateString()]);
+        $expiredRecent = $this->service(['expiry_date' => now()->subDays(1)->toDateString()]);
+        $urgent = $this->service(['expiry_date' => now()->addDays(3)->toDateString()]);
+        $upcoming = $this->service(['expiry_date' => now()->addDays(20)->toDateString()]);
+
+        $attention = Livewire::test(Dashboard::class)->instance()->attentionList;
+
+        $this->assertSame(
+            [$expiredRecent->id, $expiredOld->id, $urgent->id, $upcoming->id],
+            $attention->pluck('id')->all(),
+        );
+    }
+
+    public function test_dashboard_attention_list_filters_by_tier(): void
+    {
+        $this->service(['expiry_date' => now()->addDays(3)->toDateString()]);
+        $this->service(['expiry_date' => now()->addDays(20)->toDateString()]);
+
+        $component = Livewire::test(Dashboard::class);
+        $component->set('attentionFilter', 'urgent');
+
+        $this->assertCount(1, $component->instance()->attentionList);
     }
 }

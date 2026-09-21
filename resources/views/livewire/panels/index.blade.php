@@ -38,9 +38,7 @@
         </div>
 
         <div wire:loading.remove wire:target="search, typeFilter, sortBy, goToPage, previousPage, nextPage">
-            <div class="card overflow-hidden">
-                <div class="overflow-x-auto">
-            <x-data-table :columns="[
+            <x-data-table count-label="panel" :columns="[
                 ['key' => 'name', 'label' => 'Panel', 'sortable' => true],
                 ['key' => 'host', 'label' => 'Host', 'sortable' => true],
                 ['key' => 'type', 'label' => 'Type', 'sortable' => true],
@@ -49,7 +47,7 @@
                 ['label' => '', 'class' => 'text-right'],
             ]" :rows="$this->panels" :sort-by="$this->sortBy" :sort-dir="$this->sortDir">
                 @forelse ($this->panels as $panel)
-                    <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                    <tr class="transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                         <td class="px-5 py-4">
                             <div class="flex min-w-0 items-center gap-3">
                                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">
@@ -75,10 +73,10 @@
                                 {{ $panel->type->label() }}
                             </span>
                         </td>
-                        <td class="px-5 py-4 text-right text-zinc-600 dark:text-zinc-300">
+                        <td class="px-5 py-4 text-right tabular-nums text-zinc-600 dark:text-zinc-300">
                             {{ $panel->hosting_plans_count }}
                         </td>
-                        <td class="px-5 py-4 text-right">
+                        <td class="px-5 py-4 text-right tabular-nums">
                             <span class="badge bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                                 {{ $panel->services_count }}
                             </span>
@@ -118,12 +116,6 @@
                     </tr>
                 @endforelse
             </x-data-table>
-                </div>
-
-                @if ($this->panels->hasPages())
-                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->panels->links() }}</div>
-                @endif
-            </div>
         </div>
     </div>
 

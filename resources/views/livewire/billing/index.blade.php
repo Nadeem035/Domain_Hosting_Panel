@@ -34,25 +34,21 @@
         </div>
 
         <div wire:loading.remove wire:target="search, statusFilter, goToPage, previousPage, nextPage">
-            <div class="card overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <x-data-table :columns="[
-                            ['key' => 'renewed_on', 'label' => 'Renewed', 'sortable' => true],
-                            ['label' => 'Client'],
-                            ['label' => 'Service / Domain'],
-                            ['label' => 'Tier'],
-                            ['key' => 'company_price', 'label' => 'Provider cost', 'sortable' => true, 'class' => 'text-right'],
-                            ['key' => 'client_price', 'label' => 'Client price', 'sortable' => true, 'class' => 'text-right'],
-                            ['label' => 'Invoice #'],
-                            ['label' => 'Paid on'],
-                            ['label' => 'Status'],
-                            ['label' => '', 'class' => 'text-right'],
-                        ]" :sort-by="$this->sortBy" :sort-dir="$this->sortDir" />
-                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            @forelse ($invoices as $invoice)
+            <x-data-table :columns="[
+                ['key' => 'renewed_on', 'label' => 'Renewed', 'sortable' => true],
+                ['label' => 'Client'],
+                ['label' => 'Service / Domain'],
+                ['label' => 'Tier'],
+                ['key' => 'company_price', 'label' => 'Provider cost', 'sortable' => true, 'class' => 'text-right'],
+                ['key' => 'client_price', 'label' => 'Client price', 'sortable' => true, 'class' => 'text-right'],
+                ['label' => 'Invoice #'],
+                ['label' => 'Paid on'],
+                ['label' => 'Status'],
+                ['label' => '', 'class' => 'text-right'],
+            ]" count-label="invoice" :rows="$invoices" :sort-by="$this->sortBy" :sort-dir="$this->sortDir">
+                @forelse ($invoices as $invoice)
                                 @php($tier = $invoice->service ? \App\Services\ReminderTierCalculator::tierFor($invoice->service->expiry_date) : null)
-                                <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                                <tr class="transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                                     <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300">
                                         {{ $invoice->renewed_on?->format('M j, Y') ?? '—' }}
                                     </td>
@@ -89,10 +85,10 @@
                                             <span class="text-zinc-400 dark:text-zinc-500">—</span>
                                         @endif
                                     </td>
-                                    <td class="whitespace-nowrap px-5 py-4 text-right text-zinc-600 dark:text-zinc-300">
+                                    <td class="whitespace-nowrap px-5 py-4 text-right tabular-nums text-zinc-600 dark:text-zinc-300">
                                         {{ number_format((float) ($invoice->company_price ?? 0), 2) }} {{ $invoice->service?->currency ?: $currency }}
                                     </td>
-                                    <td class="whitespace-nowrap px-5 py-4 text-right font-semibold text-zinc-800 dark:text-zinc-200">
+                                    <td class="whitespace-nowrap px-5 py-4 text-right tabular-nums font-semibold text-zinc-800 dark:text-zinc-200">
                                         {{ number_format((float) $invoice->client_price, 2) }} {{ $invoice->service?->currency ?: $currency }}
                                     </td>
                                     <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300">{{ $invoice->invoice_number ?: '—' }}</td>
@@ -126,14 +122,7 @@
                                     </td>
                                 </tr>
                             @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if ($invoices->hasPages())
-                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $invoices->links() }}</div>
-                @endif
-            </div>
+            </x-data-table>
         </div>
     </div>
 </div>

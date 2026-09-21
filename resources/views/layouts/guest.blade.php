@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="system">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,13 +9,37 @@
 
         <script>
             (function () {
+                var root = document.documentElement;
+                var stored = null;
+                try { stored = localStorage.getItem('theme'); } catch (e) {}
+                var mode = stored || root.getAttribute('data-theme') || 'system';
+                if (mode !== 'light' && mode !== 'dark' && mode !== 'system') { mode = 'system'; }
+
                 var media = window.matchMedia('(prefers-color-scheme: dark)');
-                function apply(dark) {
-                    document.documentElement.classList.toggle('dark', dark);
-                    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+
+                function apply() {
+                    var dark = mode === 'dark' || (mode === 'system' && media.matches);
+                    root.classList.toggle('dark', dark);
+                    root.style.colorScheme = dark ? 'dark' : 'light';
                 }
-                apply(media.matches);
-                media.addEventListener('change', function (e) { apply(e.matches); });
+
+                function switchTo(next) {
+                    mode = next;
+                    try { localStorage.setItem('theme', mode); } catch (e) {}
+                    root.setAttribute('data-theme', mode);
+                    apply();
+                }
+
+                window.addEventListener('theme-changed', function (e) {
+                    var next = e.detail ? e.detail.mode : null;
+                    if (next === 'light' || next === 'dark' || next === 'system') { switchTo(next); }
+                });
+
+                media.addEventListener('change', function () {
+                    if (mode === 'system') { apply(); }
+                });
+
+                apply();
             })();
         </script>
 

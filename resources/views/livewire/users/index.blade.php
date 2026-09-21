@@ -38,21 +38,17 @@
         </div>
 
         <div wire:loading.remove wire:target="search, roleFilter, sortBy, goToPage, previousPage, nextPage">
-            <div class="card overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <x-data-table :columns="[
-                            ['key' => 'name', 'label' => 'User', 'sortable' => true],
-                            ['key' => 'company_name', 'label' => 'Company', 'sortable' => true],
-                            ['key' => 'timezone', 'label' => 'Timezone', 'sortable' => true],
-                            ['label' => 'Role'],
-                            ['key' => 'clients_count', 'label' => 'Clients', 'sortable' => true, 'class' => 'text-right'],
-                            ['key' => 'created_at', 'label' => 'Created', 'sortable' => true],
-                            ['label' => '', 'class' => 'text-right'],
-                        ]" :sort-by="$this->sortBy" :sort-dir="$this->sortDir" />
-                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            @forelse ($this->users as $user)
-                                <tr class="transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+            <x-data-table :columns="[
+                ['key' => 'name', 'label' => 'User', 'sortable' => true],
+                ['key' => 'company_name', 'label' => 'Company', 'sortable' => true],
+                ['key' => 'timezone', 'label' => 'Timezone', 'sortable' => true],
+                ['label' => 'Role'],
+                ['key' => 'clients_count', 'label' => 'Clients', 'sortable' => true, 'class' => 'text-right'],
+                ['key' => 'created_at', 'label' => 'Created', 'sortable' => true],
+                ['label' => '', 'class' => 'text-right'],
+            ]" count-label="user" :rows="$this->users" :sort-by="$this->sortBy" :sort-dir="$this->sortDir">
+                @forelse ($this->users as $user)
+                                <tr class="transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                                     <td class="px-5 py-4">
                                         <div class="flex min-w-0 items-center gap-3">
                                             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">
@@ -84,7 +80,7 @@
                                             @endforelse
                                         </div>
                                     </td>
-                                    <td class="px-5 py-4 text-right text-zinc-600 dark:text-zinc-300">{{ $user->clients_count }}</td>
+                                    <td class="px-5 py-4 text-right tabular-nums text-zinc-600 dark:text-zinc-300">{{ $user->clients_count }}</td>
                                     <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300">{{ $user->created_at?->format('M j, Y') }}</td>
                                     <td class="whitespace-nowrap px-5 py-4 text-right">
                                         <div class="flex items-center justify-end gap-1">
@@ -119,14 +115,7 @@
                                     </td>
                                 </tr>
                             @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if ($this->users->hasPages())
-                    <div class="border-t border-zinc-200 px-5 py-3 dark:border-zinc-700/60">{{ $this->users->links() }}</div>
-                @endif
-            </div>
+            </x-data-table>
         </div>
     </div>
 

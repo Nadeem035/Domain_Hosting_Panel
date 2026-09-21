@@ -15,6 +15,15 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Dashboard extends Component
 {
+    private const ATTENTION_WINDOW_DAYS = 30;
+
+    /**
+     * Active tier filter for the "needs attention" list.
+     *
+     * @var 'all'|'expired'|'urgent'|'due_soon'|'upcoming'
+     */
+    public string $attentionFilter = 'all';
+
     /**
      * Four headline stats shown as cards.
      *
@@ -32,11 +41,7 @@ class Dashboard extends Component
                 now()->startOfMonth()->toDateString(),
                 now()->endOfMonth()->toDateString(),
             ),
-            'upcoming_renewals' => $liveServices()
-                ->where('auto_renew_tracking', true)
-                ->whereNotNull('expiry_date')
-                ->where('expiry_date', '<=', now()->addDays(30)->toDateString())
-                ->count(),
+            'upcoming_renewals' => array_sum($this->renewalSnapshot()),
         ];
     }
 
@@ -76,20 +81,72 @@ class Dashboard extends Component
     }
 
     /**
-     * The most urgent tracked services, for the "needs attention" list.
+     * Tier breakdown of tracked services inside the 30-day attention window.
+     *
+     * Already-expired services within the window count too — they still need action.
+     *
+     * @return array{expired: int, urgent: int, due_soon: int, upcoming: int}
      */
     #[Computed]
-    public function expiringSoon(): Collection
+    public function renewalSnapshot(): array
     {
-        return Service::query()
+        $window = self::ATTENTION_WINDOW_DAYS;
+
+        $counts = ['expired' => 0, 'urgent' => 0, 'due_soon' => 0, 'upcoming' => 0];
+
+        Service::query()
             ->where('status', '!=', ServiceStatus::Cancelled->value)
             ->where('auto_renew_tracking', true)
             ->whereNotNull('expiry_date')
-            ->where('expiry_date', '<=', now()->addDays(30)->toDateString())
+            ->whereBetween('expiry_date', [
+                now()->subDays($window)->toDateString(),
+                now()->addDays($window)->toDateString(),
+            ])
+            ->pluck('expiry_date')
+            ->each(function ($expiry) use (&$counts) {
+                $tier = ReminderTierCalculator::tierFor($expiry);
+                if ($tier !== null) {
+                    $counts[$tier->value]++;
+                }
+            });
+
+        return $counts;
+    }
+
+    /**
+     * Tracked services in the 30-day attention window, sorted for triage:
+     * expired first (most recently expired first), then by nearest expiry.
+     * Respects the active tier filter and caps the list for scanning.
+     *
+     * @return Collection<int, Service>
+     */
+    #[Computed]
+    public function attentionList(): Collection
+    {
+        $window = self::ATTENTION_WINDOW_DAYS;
+        $filter = $this->attentionFilter;
+
+        $services = Service::query()
+            ->where('status', '!=', ServiceStatus::Cancelled->value)
+            ->where('auto_renew_tracking', true)
+            ->whereNotNull('expiry_date')
+            ->whereBetween('expiry_date', [
+                now()->subDays($window)->toDateString(),
+                now()->addDays($window)->toDateString(),
+            ])
             ->with(['client:id,name', 'hostingPlan:id,name'])
-            ->orderBy('expiry_date')
-            ->limit(8)
             ->get();
+
+        return $services
+            ->filter(fn (Service $service) => $filter === 'all'
+                || ReminderTierCalculator::tierFor($service->expiry_date)?->value === $filter)
+            ->sortBy(function (Service $service) {
+                $days = ReminderTierCalculator::daysLeft($service->expiry_date);
+
+                return $days <= 0 ? [0, -$days] : [1, $days];
+            }, SORT_REGULAR)
+            ->take(8)
+            ->values();
     }
 
     public function render()

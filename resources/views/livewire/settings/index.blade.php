@@ -14,7 +14,9 @@
                     'system' => ['globe', 'System'],
                 ] as $value => [$icon, $label])
                     <label class="cursor-pointer">
-                        <input type="radio" name="theme" value="{{ $value }}" wire:model.live="theme" class="peer sr-only">
+                        <input type="radio" name="theme" value="{{ $value }}" wire:model.live="theme"
+                            x-on:change="$dispatch('theme-changed', { mode: $event.target.value })"
+                            class="peer sr-only">
                         <span class="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-600 transition peer-checked:border-primary-500 peer-checked:bg-primary-50 peer-checked:text-primary-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:peer-checked:border-primary-400 dark:peer-checked:bg-primary-500/10 dark:peer-checked:text-primary-300">
                             <x-icon :name="$icon" class="h-4 w-4" />
                             {{ $label }}
