@@ -13,6 +13,7 @@ use App\Models\Panel;
 use App\Models\Service;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -21,6 +22,9 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class ServiceForm extends Component
 {
+    protected $messages = [
+        'domain_name.unique' => 'This domain is already tracked under another service. Edit that service instead of adding a duplicate.',
+    ];
     #[Locked]
     public ?Service $service = null;
 
@@ -114,19 +118,20 @@ class ServiceForm extends Component
     public function rules(): array
     {
         return [
-            'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', auth()->id())],
+            'client_id' => ['required', Rule::exists('clients', 'id')->where(fn ($query) => Client::tenantScopeQuery($query))],
             'type' => ['required', 'in:domain,hosting,both'],
             'panel_id' => [
                 Rule::requiredIf(in_array($this->type, ['hosting', 'both'])),
                 'nullable',
-                Rule::exists('panels', 'id')->where('user_id', auth()->id()),
+                Rule::exists('panels', 'id')->where(fn ($query) => Panel::tenantScopeQuery($query)),
             ],
-            'hosting_plan_id' => ['nullable', Rule::exists('hosting_plans', 'id')->where('user_id', auth()->id())],
+            'hosting_plan_id' => ['nullable', Rule::exists('hosting_plans', 'id')->where(fn ($query) => HostingPlan::tenantScopeQuery($query))],
             'domain_name' => [
                 Rule::requiredIf(in_array($this->type, ['domain', 'both'])),
                 'nullable',
                 'string',
                 'max:255',
+                Rule::unique('services', 'domain_name')->where(fn ($query) => Service::tenantScopeQuery($query))->ignore($this->service?->id),
             ],
             'created_date' => ['required', 'date'],
             'expiry_date' => ['required', 'date', 'after_or_equal:created_date'],
@@ -141,7 +146,13 @@ class ServiceForm extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
+        } catch (ValidationException $e) {
+            $this->dispatch('toast', message: $e->validator->errors()->first(), type: 'error');
+
+            throw $e;
+        }
 
         $data['client_id'] = (int) $data['client_id'];
         $data['panel_id'] = $data['panel_id'] !== '' ? (int) $data['panel_id'] : null;
@@ -279,6 +290,14 @@ class ServiceForm extends Component
             'quickClientEmail' => ['nullable', 'email', 'max:255'],
         ]);
 
+        $client = Client::where('email', $data['quickClientEmail'])->first();
+
+        if ($client) {
+            $this->dispatch('toast', message: "A client with this email already exists: {$client->name}. Pick them from the list instead.", type: 'error');
+
+            return;
+        }
+
         $client = Client::create([
             'name' => $data['quickClientName'],
             'email' => $data['quickClientEmail'] ?: null,
@@ -306,6 +325,14 @@ class ServiceForm extends Component
             'quickPanelType' => ['required', 'in:cpanel,whm,plesk,directadmin,other'],
             'quickPanelHost' => ['nullable', 'string', 'max:255'],
         ]);
+
+        $panel = Panel::where('host', $data['quickPanelHost'])->first();
+
+        if ($panel) {
+            $this->dispatch('toast', message: "A panel already uses this host: {$panel->name}. Pick it from the list instead.", type: 'error');
+
+            return;
+        }
 
         $panel = Panel::create([
             'name' => $data['quickPanelName'],

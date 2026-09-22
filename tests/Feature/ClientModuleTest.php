@@ -140,4 +140,24 @@ class ClientModuleTest extends TestCase
             ->assertViewHas('services', fn ($services) => $services->count() === 3)
             ->assertViewHas('stats', fn ($stats) => $stats['active_count'] === 2 && $stats['monthly_revenue'] === 170.0);
     }
+
+    public function test_client_cannot_reuse_existing_email(): void
+    {
+        Client::factory()->for($this->user)->create(['name' => 'Existing', 'email' => 'dup@example.com']);
+
+        Livewire::test(\App\Livewire\Clients\ClientForm::class)
+            ->set('name', 'New Client')
+            ->set('email', 'dup@example.com')
+            ->call('save')
+            ->assertHasErrors(['email' => 'unique']);
+    }
+
+    public function test_client_edit_allows_unchanged_email(): void
+    {
+        $client = Client::factory()->for($this->user)->create(['email' => 'keep@example.com']);
+
+        Livewire::test(\App\Livewire\Clients\ClientForm::class, ['client' => $client])
+            ->call('save')
+            ->assertHasNoErrors();
+    }
 }

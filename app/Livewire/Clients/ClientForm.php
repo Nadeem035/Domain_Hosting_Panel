@@ -4,6 +4,8 @@ namespace App\Livewire\Clients;
 
 use App\Enums\ClientStatus;
 use App\Models\Client;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -11,6 +13,9 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class ClientForm extends Component
 {
+    protected $messages = [
+        'email.unique' => 'A client with this email already exists. Pick them from the list instead of adding a duplicate.',
+    ];
     #[Locked]
     public ?Client $client = null;
 
@@ -48,7 +53,7 @@ class ClientForm extends Component
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('clients', 'email')->where(fn ($query) => Client::tenantScopeQuery($query))->ignore($this->client?->id)],
             'phone' => ['nullable', 'string', 'max:50'],
             'company' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string'],
@@ -59,7 +64,13 @@ class ClientForm extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
+        } catch (ValidationException $e) {
+            $this->dispatch('toast', message: $e->validator->errors()->first(), type: 'error');
+
+            throw $e;
+        }
 
         if ($this->client) {
             $this->authorize('update', $this->client);

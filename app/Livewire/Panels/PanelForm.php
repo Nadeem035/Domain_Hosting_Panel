@@ -4,6 +4,8 @@ namespace App\Livewire\Panels;
 
 use App\Enums\PanelType;
 use App\Models\Panel;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -11,6 +13,10 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class PanelForm extends Component
 {
+    protected $messages = [
+        'host.unique' => 'Another panel already uses this host. Pick that panel from the list instead of adding a duplicate.',
+        'ip_address.unique' => 'Another panel already uses this IP address. Pick that panel from the list instead of adding a duplicate.',
+    ];
     #[Locked]
     public ?Panel $panel = null;
 
@@ -55,8 +61,8 @@ class PanelForm extends Component
         return [
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', 'in:'.implode(',', array_column(PanelType::cases(), 'value'))],
-            'host' => ['nullable', 'string', 'max:255'],
-            'ip_address' => ['nullable', 'ip', 'max:45'],
+            'host' => ['nullable', 'string', 'max:255', Rule::unique('panels', 'host')->where(fn ($query) => Panel::tenantScopeQuery($query))->ignore($this->panel?->id)],
+            'ip_address' => ['nullable', 'ip', 'max:45', Rule::unique('panels', 'ip_address')->where(fn ($query) => Panel::tenantScopeQuery($query))->ignore($this->panel?->id)],
             'client_limit' => ['required', 'integer', 'min:0', 'max:100000'],
             'username' => ['nullable', 'string', 'max:100'],
             'login_url' => ['nullable', 'url', 'max:255'],
@@ -67,7 +73,13 @@ class PanelForm extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
+        } catch (ValidationException $e) {
+            $this->dispatch('toast', message: $e->validator->errors()->first(), type: 'error');
+
+            throw $e;
+        }
 
         if ($this->panel) {
             $this->authorize('update', $this->panel);

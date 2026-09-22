@@ -11,7 +11,8 @@ trait BelongsToTenant
 {
     /**
      * Boot the trait: apply a row-level tenant scope and auto-fill user_id.
-     * Admins are exempt so they can see and manage every tenant's data.
+     * Admins are exempt from the read scope so they can see and manage every
+     * tenant's data, but they still own what they create.
      */
     public static function bootBelongsToTenant(): void
     {
@@ -26,7 +27,7 @@ trait BelongsToTenant
         static::creating(function (Model $model) {
             $user = auth()->user();
 
-            if ($user && ! $user->hasRole('admin')) {
+            if ($user) {
                 $model->user_id = $user->getKey();
             }
         });
@@ -35,5 +36,22 @@ trait BelongsToTenant
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Mirror the tenant global scope onto an arbitrary query builder for
+     * raw validation closures (Rule::exists / Rule::unique) that run
+     * against the query builder directly and skip Eloquent global scopes.
+     * Admins are exempt, matching the scope in bootBelongsToTenant.
+     */
+    public static function tenantScopeQuery($query)
+    {
+        $user = auth()->user();
+
+        if ($user && ! $user->hasRole('admin')) {
+            $query->where((new static)->getTable().'.user_id', $user->getKey());
+        }
+
+        return $query;
     }
 }

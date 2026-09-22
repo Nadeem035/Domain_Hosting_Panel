@@ -359,4 +359,77 @@ class ServiceModuleTest extends TestCase
         Livewire::test(ServiceIndex::class)->call('exportPdf')->assertFileDownloaded($filename.'.pdf');
         Livewire::test(ServiceIndex::class)->call('exportExcel')->assertFileDownloaded($filename.'.xlsx');
     }
+
+    public function test_service_cannot_reuse_existing_domain(): void
+    {
+        $client = $this->makeClient();
+        Service::factory()->for($this->user)->for($client)->create(['domain_name' => 'example.com']);
+
+        Livewire::test(ServiceForm::class)
+            ->set('client_id', (string) $client->id)
+            ->set('type', 'domain')
+            ->set('domain_name', 'example.com')
+            ->set('created_date', '2026-01-01')
+            ->set('expiry_date', '2027-01-01')
+            ->set('company_price', '10.00')
+            ->set('client_price', '20.00')
+            ->set('currency', 'USD')
+            ->call('save')
+            ->assertHasErrors(['domain_name' => 'unique']);
+    }
+
+    public function test_editing_service_allows_unchanged_domain(): void
+    {
+        $client = $this->makeClient();
+        $service = Service::factory()->for($this->user)->for($client)->create(['domain_name' => 'example.com', 'expiry_date' => '2027-01-01']);
+
+        Livewire::test(ServiceForm::class, ['service' => $service])
+            ->call('save')
+            ->assertHasNoErrors();
+    }
+
+    public function test_admin_can_save_service_with_client_from_another_tenant(): void
+    {
+        \Spatie\Permission\Models\Role::findOrCreate('admin', 'web');
+        $admin = User::factory()->create()->assignRole('admin');
+
+        $otherUser = User::factory()->create();
+        $this->actingAs($otherUser);
+        $foreignClient = Client::factory()->for($otherUser)->create();
+        $this->actingAs($admin);
+
+        Livewire::test(ServiceForm::class)
+            ->set('client_id', (string) $foreignClient->id)
+            ->set('type', 'domain')
+            ->set('domain_name', 'admin-domain.com')
+            ->set('created_date', '2026-01-01')
+            ->set('expiry_date', '2027-01-01')
+            ->set('company_price', '10.00')
+            ->set('client_price', '20.00')
+            ->set('currency', 'USD')
+            ->call('save')
+            ->assertHasNoErrors();
+    }
+
+    public function test_non_admin_cannot_reference_another_users_client(): void
+    {
+        $otherUser = User::factory()->create();
+        $this->actingAs($otherUser);
+        $foreignClient = Client::factory()->for($otherUser)->create();
+        $this->actingAs($this->user);
+
+        Livewire::test(ServiceForm::class)
+            ->set('client_id', (string) $foreignClient->id)
+            ->set('type', 'domain')
+            ->set('domain_name', 'foreign.com')
+            ->set('created_date', '2026-01-01')
+            ->set('expiry_date', '2027-01-01')
+            ->set('company_price', '10.00')
+            ->set('client_price', '20.00')
+            ->set('currency', 'USD')
+            ->call('save')
+            ->assertHasErrors(['client_id' => 'The selected client id is invalid.']);
+
+        $this->assertDatabaseCount('services', 0);
+    }
 }

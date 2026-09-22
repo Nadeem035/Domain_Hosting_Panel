@@ -248,4 +248,32 @@ class PanelModuleTest extends TestCase
         $this->assertDatabaseMissing('panels', ['id' => $panel->id]);
         $this->assertDatabaseHas('hosting_plans', ['id' => $plan->id, 'panel_id' => null]);
     }
+
+    public function test_panel_cannot_duplicate_existing_host_or_ip(): void
+    {
+        Panel::factory()->for($this->user)->create(['name' => 'Plesk Node', 'host' => 'plesk.example.com', 'ip_address' => '1.2.3.4']);
+
+        Livewire::test(PanelForm::class)
+            ->set('name', 'Duplicate Panel')
+            ->set('host', 'plesk.example.com')
+            ->set('ip_address', '192.168.1.10')
+            ->call('save')
+            ->assertHasErrors(['host' => 'unique']);
+
+        Livewire::test(PanelForm::class)
+            ->set('name', 'Duplicate Panel')
+            ->set('host', 'backup.example.com')
+            ->set('ip_address', '1.2.3.4')
+            ->call('save')
+            ->assertHasErrors(['ip_address' => 'unique']);
+    }
+
+    public function test_panel_edit_allows_unchanged_host_and_ip(): void
+    {
+        $panel = Panel::factory()->for($this->user)->create(['host' => 'plesk.example.com', 'ip_address' => '1.2.3.4']);
+
+        Livewire::test(PanelForm::class, ['panel' => $panel])
+            ->call('save')
+            ->assertHasNoErrors();
+    }
 }
